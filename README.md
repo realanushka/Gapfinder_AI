@@ -96,6 +96,7 @@ These are the choices actually in the code, not options still open.
 | LLM | Any OpenAI-compatible API (default: Google Gemini free tier); Claude also supported | Generates questions, grades answers, writes plans |
 | Charts | Recharts | Progress dashboard |
 | Auth | JWT (bcrypt password hashes) | Login with demo credentials, no external auth service |
+| Configuration | One root `.env` (pydantic-settings in the backend, `@next/env` in the frontend) | A single place for every setting and secret |
 
 ## Project status
 
@@ -131,7 +132,10 @@ Interactive docs are at <http://localhost:8000/docs> when the backend is running
 
 ```
 GapFinder AI/
+├── .env                            # ALL environment variables (git-ignored, you create it)
+├── .env.example                    # template for .env (committed)
 ├── frontend/                       # Next.js + Tailwind app
+│   ├── next.config.ts              # also loads the root .env
 │   └── src/
 │       ├── app/
 │       │   ├── login/, signup/     # public pages
@@ -153,7 +157,8 @@ GapFinder AI/
 │   │   ├── models/                 # 10 SQLAlchemy models
 │   │   ├── schemas/                # Pydantic request/response models
 │   │   ├── core/security.py        # bcrypt + JWT
-│   │   ├── config.py, database.py, dependencies.py
+│   │   ├── config.py               # settings, read from the root .env
+│   │   ├── database.py, dependencies.py
 │   │   └── main.py
 │   ├── migrations/versions/        # 0001 initial, 0002, 0003, 0004 (syllabus topic maps)
 │   ├── scripts/                    # verify_db, seed_demo, demo_data
@@ -216,6 +221,22 @@ Frontend (same root `.env`):
 ```ini
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
+
+Every variable, and who reads it:
+
+| Variable | Read by | Purpose |
+|---|---|---|
+| `DATABASE_URL` | backend | Postgres + pgvector connection (Supabase Session pooler, port 5432) |
+| `JWT_SECRET`, `JWT_ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` | backend | Signing and expiry of login tokens |
+| `LLM_PROVIDER`, `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | backend | Text generation (Gemini by default) |
+| `ANTHROPIC_API_KEY` | backend | Only if `LLM_PROVIDER=anthropic` |
+| `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, `EMBEDDING_MODEL`, `EMBEDDING_DIM` | backend | Embeddings (Gemini by default; the key falls back to `LLM_API_KEY`) |
+| `OPENAI_API_KEY` | backend | Only if `EMBEDDING_BASE_URL` is empty (OpenAI embeddings) |
+| `ENVIRONMENT`, `CORS_ORIGINS` | backend | Mode and the frontend URLs allowed to call the API |
+| `DEMO_USER_EMAIL`, `DEMO_USER_PASSWORD` | backend (seed script) | The preloaded demo account |
+| `NEXT_PUBLIC_API_URL` | frontend | Backend URL; built into the browser bundle at build time |
+
+The backend finds the root `.env` by an absolute path, so `uvicorn`, `alembic` and the scripts work from any folder. Never commit `.env`; only `.env.example` belongs in git.
 
 ### 2. Set up the backend and database
 

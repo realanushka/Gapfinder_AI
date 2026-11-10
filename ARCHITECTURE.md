@@ -177,10 +177,24 @@ The system is designed to degrade gracefully on free AI and hosting plans:
 
 - **Authentication:** bcrypt password hashes, JWT bearer tokens.
 - **Authorisation:** all data access is filtered by the signed-in user; cross-user access returns 404.
-- **Secrets:** database URL, API keys and the JWT secret live only in the backend environment (never in the browser or the repository; `.env` files are git-ignored).
+- **Secrets:** database URL, API keys and the JWT secret are kept in the single root `.env`, which is git-ignored. Only the backend reads them. The frontend loads the same file, but Next.js exposes only `NEXT_PUBLIC_*` variables to the browser, and the only one is `NEXT_PUBLIC_API_URL`, which is not secret. Secrets never reach the browser or the repository. `.env.example` is the committed template with placeholder values.
 - **Known gap:** there is no rate limiting on signup or AI endpoints, and the demo account's password is public by design. Both matter once the app is exposed publicly (see [DEPLOYING.md](./DEPLOYING.md) §8).
 
-## 8. Deployment
+## 8. Configuration and deployment
+
+### Configuration: one root `.env`
+
+```
+GapFinder AI/.env ──► backend/app/config.py    (pydantic-settings, absolute path to the root file)
+                  └─► frontend/next.config.ts  (@next/env loadEnvConfig on the parent folder)
+```
+
+- **Backend:** `Settings` in `backend/app/config.py` sets `env_file` to `Path(__file__).resolve().parents[2] / ".env"`. The file is therefore found no matter which folder `uvicorn`, `alembic` (`migrations/env.py`) or `scripts/seed_demo` is started from.
+- **Frontend:** Next.js reads `.env` files only from its own folder, so `next.config.ts` calls `loadEnvConfig` on the repository root before the app compiles. `NEXT_PUBLIC_API_URL` is then inlined into the browser bundle as usual.
+- **Precedence:** variables already set in the process environment win over the file. On Render and Vercel the values come from each dashboard and no `.env` file exists. The same code works locally and in production without changes.
+- **Full variable list:** `.env.example` and the README's *Configure environment variables* section.
+
+### Deployment
 
 ```
 Browser ──► Vercel (Next.js) ──► Render (FastAPI) ──► Supabase (Postgres + pgvector)
