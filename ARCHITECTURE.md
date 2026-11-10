@@ -180,7 +180,7 @@ The system is designed to degrade gracefully on free AI and hosting plans:
 - **Secrets:** database URL, API keys and the JWT secret are kept in the single root `.env`, which is git-ignored. Only the backend reads them. The frontend loads the same file, but Next.js exposes only `NEXT_PUBLIC_*` variables to the browser, and the only one is `NEXT_PUBLIC_API_URL`, which is not secret. Secrets never reach the browser or the repository. `.env.example` is the committed template with placeholder values.
 - **Known gap:** there is no rate limiting on signup or AI endpoints, and the demo account's password is public by design. Both matter once the app is exposed publicly (see [DEPLOYING.md](./DEPLOYING.md) §8).
 
-## 8. Configuration and deployment
+## 8. Configuration, dependencies and deployment
 
 ### Configuration: one root `.env`
 
@@ -193,6 +193,20 @@ GapFinder AI/.env ──► backend/app/config.py    (pydantic-settings, absolut
 - **Frontend:** Next.js reads `.env` files only from its own folder, so `next.config.ts` calls `loadEnvConfig` on the repository root before the app compiles. `NEXT_PUBLIC_API_URL` is then inlined into the browser bundle as usual.
 - **Precedence:** variables already set in the process environment win over the file. On Render and Vercel the values come from each dashboard and no `.env` file exists. The same code works locally and in production without changes.
 - **Full variable list:** `.env.example` and the README's *Configure environment variables* section.
+
+### Dependencies
+
+```
+requirements.txt (root)    ── combined reference: backend pip packages + frontend npm packages (as comments)
+backend/requirements.txt   ── backend Python packages ──► pip locally, Render build
+frontend/package.json      ── frontend npm packages   ──► npm install locally, Vercel build
+         + package-lock.json  (exact resolved versions)
+```
+
+- **Source of truth:** `backend/requirements.txt` and `frontend/package.json`. Each deploy service installs from its own folder, because Render's and Vercel's root directories are `backend` and `frontend`.
+- **Root `requirements.txt`:** one place to see the whole stack. Its Python section is identical to `backend/requirements.txt`, so `pip install -r requirements.txt` works from the root too. The npm packages are listed as comments because pip cannot install them. When a version changes in either app, update this file by hand.
+- **Runtimes:** Python 3.11 (pinned on Render with `PYTHON_VERSION=3.11.9`) and Node.js 18+ (tested on 22).
+- **Key packages:** FastAPI, uvicorn, SQLAlchemy (async) + asyncpg, Alembic, pgvector, pydantic-settings, python-jose, bcrypt, PyMuPDF/pdfplumber, `openai` (used for Gemini through its OpenAI-compatible endpoint) and `anthropic` (optional). Frontend: Next.js 16, React 19, Tailwind v4, Recharts, `@next/env` (loads the root `.env`).
 
 ### Deployment
 

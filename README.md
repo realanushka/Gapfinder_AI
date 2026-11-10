@@ -134,6 +134,7 @@ Interactive docs are at <http://localhost:8000/docs> when the backend is running
 GapFinder AI/
 ├── .env                            # ALL environment variables (git-ignored, you create it)
 ├── .env.example                    # template for .env (committed)
+├── requirements.txt                # combined list: backend (pip) + frontend (npm, as comments)
 ├── frontend/                       # Next.js + Tailwind app
 │   ├── next.config.ts              # also loads the root .env
 │   └── src/
@@ -162,7 +163,7 @@ GapFinder AI/
 │   │   └── main.py
 │   ├── migrations/versions/        # 0001 initial, 0002, 0003, 0004 (syllabus topic maps)
 │   ├── scripts/                    # verify_db, seed_demo, demo_data
-│   └── requirements.txt
+│   └── requirements.txt            # backend packages (used by Render)
 ├── GapFinder_AI_Implementation_Plan.md   # original 12-step plan
 ├── ARCHITECTURE.md                       # system design (as built)
 ├── RUNNING.md                            # run locally + troubleshooting
@@ -222,21 +223,51 @@ Frontend (same root `.env`):
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-Every variable, and who reads it:
+#### Every variable: private or public
 
-| Variable | Read by | Purpose |
+- 🔒 **Private (secret):** put the real value **only** in your local `.env` and in the Render dashboard. Never commit it, paste it into docs or chat, or give it a `NEXT_PUBLIC_` name. In `.env.example` it stays empty or a placeholder.
+- 🌐 **Public (safe to share):** settings, not secrets. The real value may appear in `.env.example`, the README and the docs.
+
+| Variable | Private / Public | Read by | Purpose |
+|---|---|---|---|
+| `DATABASE_URL` | 🔒 **Private** (contains the DB password) | backend | Postgres + pgvector connection (Supabase Session pooler, port 5432) |
+| `JWT_SECRET` | 🔒 **Private** (anyone who has it can forge logins) | backend | Signs login tokens. Use a different value locally and on Render |
+| `LLM_API_KEY` | 🔒 **Private** | backend | Gemini key for text generation |
+| `EMBEDDING_API_KEY` | 🔒 **Private** (optional) | backend | Separate embeddings key; if empty, `LLM_API_KEY` is used |
+| `ANTHROPIC_API_KEY` | 🔒 **Private** (optional) | backend | Only if `LLM_PROVIDER=anthropic` |
+| `OPENAI_API_KEY` | 🔒 **Private** (optional) | backend | Only if `EMBEDDING_BASE_URL` is empty (OpenAI embeddings) |
+| `JWT_ALGORITHM` | 🌐 Public | backend | `HS256` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | 🌐 Public | backend | Login lifetime, `60` |
+| `LLM_PROVIDER` | 🌐 Public | backend | `openai_compatible` (Gemini) or `anthropic` |
+| `LLM_BASE_URL` | 🌐 Public | backend | Gemini's OpenAI-compatible endpoint |
+| `LLM_MODEL` | 🌐 Public | backend | Comma-separated model list, best first |
+| `EMBEDDING_BASE_URL` | 🌐 Public | backend | Gemini's OpenAI-compatible endpoint |
+| `EMBEDDING_MODEL` | 🌐 Public | backend | `gemini-embedding-001` |
+| `EMBEDDING_DIM` | 🌐 Public | backend | `1536` (must match the database column) |
+| `ENVIRONMENT` | 🌐 Public | backend | `development` locally, `production` on Render |
+| `CORS_ORIGINS` | 🌐 Public | backend | Frontend URLs allowed to call the API |
+| `DEMO_USER_EMAIL` | 🌐 Public (by design) | backend (seed script) | `demo@gapfinder.ai` |
+| `DEMO_USER_PASSWORD` | 🌐 Public (by design) | backend (seed script) | `demo123`, shared on purpose so anyone can try the demo. Never reuse it for a real account |
+| `NEXT_PUBLIC_API_URL` | 🌐 Public (sent to every browser) | frontend | Backend URL, built into the browser bundle at build time |
+
+Rules that keep it this way:
+
+- **Only `NEXT_PUBLIC_*` variables reach the browser.** Never put a 🔒 value in a variable with that prefix, because it would be visible to every visitor.
+- **`.env` is git-ignored; `.env.example` is committed.** The template holds only 🌐 values and empty 🔒 ones.
+- **On Render:** add every 🔒 variable plus the 🌐 backend ones. **On Vercel:** add only `NEXT_PUBLIC_API_URL`, the frontend has no secrets.
+- **If a 🔒 value ever leaks** (committed, pasted, screenshotted), rotate it: new database password in Supabase, new key in Google AI Studio, new `JWT_SECRET`.
+
+The backend finds the root `.env` by an absolute path, so `uvicorn`, `alembic` and the scripts work from any folder.
+
+### Requirements files
+
+| File | Contains | Used by |
 |---|---|---|
-| `DATABASE_URL` | backend | Postgres + pgvector connection (Supabase Session pooler, port 5432) |
-| `JWT_SECRET`, `JWT_ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` | backend | Signing and expiry of login tokens |
-| `LLM_PROVIDER`, `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | backend | Text generation (Gemini by default) |
-| `ANTHROPIC_API_KEY` | backend | Only if `LLM_PROVIDER=anthropic` |
-| `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, `EMBEDDING_MODEL`, `EMBEDDING_DIM` | backend | Embeddings (Gemini by default; the key falls back to `LLM_API_KEY`) |
-| `OPENAI_API_KEY` | backend | Only if `EMBEDDING_BASE_URL` is empty (OpenAI embeddings) |
-| `ENVIRONMENT`, `CORS_ORIGINS` | backend | Mode and the frontend URLs allowed to call the API |
-| `DEMO_USER_EMAIL`, `DEMO_USER_PASSWORD` | backend (seed script) | The preloaded demo account |
-| `NEXT_PUBLIC_API_URL` | frontend | Backend URL; built into the browser bundle at build time |
+| `requirements.txt` (root) | Every package in one list: the backend's Python packages, which pip installs, and the frontend's npm packages, listed as comments with their versions. Also lists the tested runtimes (Python 3.11, Node 22) | You: one place to see everything |
+| `backend/requirements.txt` | Backend Python packages only | `pip` locally and **Render** |
+| `frontend/package.json` + `package-lock.json` | Frontend npm packages only | `npm install` locally and **Vercel** |
 
-The backend finds the root `.env` by an absolute path, so `uvicorn`, `alembic` and the scripts work from any folder. Never commit `.env`; only `.env.example` belongs in git.
+The files in `backend/` and `frontend/` are the source of truth. If you change a version there, update the root `requirements.txt` too. `pip install -r requirements.txt` gives the same result from the root or from `backend/`.
 
 ### 2. Set up the backend and database
 
@@ -244,7 +275,7 @@ The backend finds the root `.env` by an absolute path, so `uvicorn`, `alembic` a
 cd backend
 python -m venv venv
 venv\Scripts\activate         # Windows; use source venv/bin/activate elsewhere
-pip install -r requirements.txt
+pip install -r requirements.txt   # or, from the root: pip install -r requirements.txt
 
 alembic upgrade head          # creates the vector extension, 10 tables and their indexes
 python -m scripts.verify_db   # confirms the schema landed
