@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Design tokens. Semantic names (surface/border/brand/weak/medium/strong) so
+   components never hardcode a hex value and dark mode is a single swap below.
+--------------------------------------------------------------------------- */
+:root {
+  --background: #f7f7fb;
+  --surface: #ffffff;
+  --surface-muted: #f1f1f6;
+  --foreground: #16161d;
+  --muted: #65657a;
+  --border: #e2e2ec;
+
+  --brand: #5b4bdb;
+  --brand-hover: #4a3cc4;
+  --brand-soft: #ece9fd;
+
+  --weak: #d6334c;
+  --weak-soft: #fde8ec;
+  --medium: #c17a08;
+  --medium-soft: #fdf3e0;
+  --strong: #17865a;
+  --strong-soft: #e4f6ed;
+
+  /* Chart series: fixed 8-slot categorical order, assigned in sequence and
+     never cycled. Validated against this surface (#ffffff) with
+     scripts/validate_palette.js -- all checks pass; aqua/yellow/magenta sit
+     below 3:1, which is why the dashboard ships a table view as relief. */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #4a3aa7;
+  --series-8: #e34948;
+
+  --chart-grid: #e1e0d9;
+  --chart-axis: #c3c2b7;
+  --chart-muted: #898781;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0d0d12;
+    --surface: #16161d;
+    --surface-muted: #1e1e27;
+    --foreground: #ededf2;
+    --muted: #9b9bb0;
+    --border: #2b2b36;
+
+    --brand: #8b7dff;
+    --brand-hover: #9d91ff;
+    --brand-soft: #231f3d;
+
+    --weak: #ff7a8f;
+    --weak-soft: #351a21;
+    --medium: #f0b958;
+    --medium-soft: #332714;
+    --strong: #58d3a0;
+    --strong-soft: #10291f;
+
+    /* Same eight hues re-stepped for the dark surface (#16161d), not an
+       automatic flip. Validated separately: all checks pass, incl. 3:1. */
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
+
+    --chart-grid: #2c2c2a;
+    --chart-axis: #383835;
+    --chart-muted: #898781;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+
+  --color-weak: var(--weak);
+  --color-weak-soft: var(--weak-soft);
+  --color-medium: var(--medium);
+  --color-medium-soft: var(--medium-soft);
+  --color-strong: var(--strong);
+  --color-strong-soft: var(--strong-soft);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Keyboard focus should always be visible, including on custom controls. */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
