@@ -1,0 +1,85 @@
+# ===========================================================================
+# GapFinder AI - all project requirements in one place (backend + frontend).
+#
+# This is a combined reference. The per-app files are still the source of
+# truth, and the deploy services use them:
+#   backend  -> backend/requirements.txt   (Render)
+#   frontend -> frontend/package.json      (Vercel)
+# If you change a version there, update it here too.
+#
+# Runtimes:
+#   Python 3.11  (tested on 3.11; Render: PYTHON_VERSION=3.11.9)
+#   Node.js 18+  (tested on Node 22.18.0, npm 10.9.3)
+#
+# Install everything (from the project root):
+#   Backend :  python -m venv backend\venv
+#              backend\venv\Scripts\activate
+#              pip install -r requirements.txt
+#   Frontend:  cd frontend
+#              npm install
+#
+# pip installs only the Python packages below. The frontend packages are
+# npm packages, so they are listed as comments; `npm install` in frontend/
+# installs exactly these from package.json / package-lock.json.
+# ===========================================================================
+
+
+# ---------------------------------------------------------------------------
+# BACKEND (Python / pip)  -  same as backend/requirements.txt
+# ---------------------------------------------------------------------------
+
+# Web framework
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# Database
+sqlalchemy==2.0.35
+asyncpg==0.29.0
+alembic==1.13.3
+pgvector==0.3.4
+
+# Settings & validation
+pydantic==2.9.2
+pydantic-settings==2.5.2
+email-validator==2.2.0
+
+# Auth
+python-jose[cryptography]==3.3.0
+bcrypt==5.0.0
+python-multipart==0.0.9
+
+# PDF parsing
+pymupdf==1.24.10
+pdfplumber==0.11.4
+
+# AI providers (Gemini is used through the openai client; anthropic is optional)
+openai==1.51.0
+anthropic==0.36.0
+
+# Utilities
+httpx==0.27.2
+tenacity==9.0.0
+
+
+# ---------------------------------------------------------------------------
+# FRONTEND (Node.js / npm)  -  same as frontend/package.json
+# Not installable with pip. Run `npm install` inside frontend/.
+# Format: package  version-in-package.json  (installed version)
+# ---------------------------------------------------------------------------
+
+# dependencies
+#   next                    16.4.5      (16.4.5)
+#   react                   19.3.0      (19.3.0)
+#   react-dom               19.3.0      (19.3.0)
+#   recharts                ^3.10.1     (3.10.1)
+#   @next/env               16.4.5      (16.4.5)   loads the root .env
+
+# devDependencies
+#   typescript              ^5          (5.9.3)
+#   tailwindcss             ^4          (4.3.5)
+#   @tailwindcss/turbopack  ^4          (4.3.5)
+#   eslint                  ^9          (9.39.5)
+#   eslint-config-next      16.4.5      (16.4.5)
+#   @types/node             ^20         (20.19.43)
+#   @types/react            ^19         (19.3.0)
+#   @types/react-dom        ^19         (19.3.0)
