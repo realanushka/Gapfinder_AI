@@ -8,7 +8,7 @@ Everything below is optional polish, in rough priority order.
 - Gemini's free tier allows about **20 requests per day per model**. The app lists
   several models in `LLM_MODEL` and moves to the next automatically, but a heavy
   day of testing can still exhaust them. Fix: wait for the daily reset, add a second
-  free provider (Groq, see comments in `backend/.env`), or enable billing on Google.
+  free provider (Groq, see comments in the root `.env`), or enable billing on Google.
 - *Build from syllabus* took ~3 minutes on the demo paper (one slow LLM call per past question).
 
 ## Optional improvements

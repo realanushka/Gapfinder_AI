@@ -52,7 +52,7 @@ class MalformedEmbeddingResponse(EmbeddingError):
 def _require_client() -> AsyncOpenAI:
     if _client is None:
         raise EmbeddingNotConfigured(
-            "No embedding provider configured — set OPENAI_API_KEY, or EMBEDDING_BASE_URL + a key, in backend/.env"
+            "No embedding provider configured — set OPENAI_API_KEY, or EMBEDDING_BASE_URL + a key, in the root .env"
         )
     return _client
 

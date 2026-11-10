@@ -1,6 +1,6 @@
 """Thin wrapper around the LLM provider so every other service calls one place.
 
-Two backends, chosen by `LLM_PROVIDER` in backend/.env:
+Two backends, chosen by `LLM_PROVIDER` in the root .env:
 
 * `anthropic` (default) -- Claude, with native JSON-schema structured outputs.
 * `openai_compatible` -- any OpenAI-style endpoint: Google Gemini, Groq,
@@ -100,7 +100,7 @@ class LLMOutputTruncated(LLMError):
 def _require_client() -> AsyncAnthropic:
     if _client is None:
         raise LLMNotConfigured(
-            "ANTHROPIC_API_KEY is not configured — add it to backend/.env"
+            "ANTHROPIC_API_KEY is not configured — add it to the root .env"
         )
     return _client
 
@@ -108,7 +108,7 @@ def _require_client() -> AsyncAnthropic:
 def _require_compat_client() -> AsyncOpenAI:
     if _compat_client is None:
         raise LLMNotConfigured(
-            "LLM_PROVIDER=openai_compatible needs LLM_API_KEY and LLM_BASE_URL in backend/.env"
+            "LLM_PROVIDER=openai_compatible needs LLM_API_KEY and LLM_BASE_URL in the root .env"
         )
     return _compat_client
 

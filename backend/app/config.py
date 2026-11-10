@@ -1,11 +1,19 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# The single .env for the whole project lives at the repository root
+# (backend/app/config.py -> parents[2]). An absolute path means it is found no
+# matter which directory uvicorn, alembic or a script is started from. Real
+# environment variables (e.g. set on Render) take precedence over the file,
+# and a missing file is simply ignored.
+ROOT_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=ROOT_ENV_FILE, extra="ignore")
 
     # Database
     database_url: str = "postgresql+asyncpg://user:password@localhost:5432/gapfinder"

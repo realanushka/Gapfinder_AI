@@ -5,7 +5,7 @@ Node, Supabase Postgres, Google Gemini free tier).
 
 ## One-time setup (already done on this machine)
 
-1. `backend/.env` is filled in: `DATABASE_URL`, `JWT_SECRET`, `LLM_API_KEY`
+1. The root `.env` (`D:\GapFinder AI\.env`, one file for backend and frontend) is filled in: `DATABASE_URL`, `JWT_SECRET`, `LLM_API_KEY`
    (free Gemini key from <https://aistudio.google.com/apikey>).
 2. Database tables created and demo data loaded:
 
@@ -41,7 +41,7 @@ cd "D:\GapFinder AI\frontend"
 npm run dev
 ```
 
-(First time on a new machine: `npm install` and `copy .env.local.example .env.local` first.)
+(First time on a new machine: run `npm install` in `frontend`, and `copy .env.example .env` in the root folder.)
 
 Open <http://localhost:3000>. On the login page click **Use demo account** (it only fills in the fields), then **Log in**.
 
@@ -79,7 +79,7 @@ Log in with **demo@gapfinder.ai / demo123** (on the login page: **Use demo accou
 
 Then **Gap Report**, **Plan** and **Dashboard** as before.
 
-## How the AI part is configured (`backend/.env`)
+## How the AI part is configured (root `.env`)
 
 | Setting | Current value | Meaning |
 |---|---|---|
@@ -110,4 +110,4 @@ add `ANTHROPIC_API_KEY=...`.
 
 - Change `JWT_SECRET` (it signs login tokens) — already done locally; use a fresh one in any deployment.
 - The demo password `demo123` is intentional for judges; don't ship it to anything real.
-- `backend/.env` holds your database password and API key. It is git-ignored; never paste it into chat or commit it.
+- The root `.env` holds your database password and API key. It is git-ignored; never paste it into chat or commit it.

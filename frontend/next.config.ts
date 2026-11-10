@@ -1,4 +1,14 @@
+import path from "node:path";
+import { loadEnvConfig } from "@next/env";
 import type { NextConfig } from "next";
+
+// The project keeps one .env at the repository root, shared with the backend.
+// Next.js only reads .env files from its own folder (frontend/), so load the
+// root one here. This runs before the app is compiled, so NEXT_PUBLIC_* values
+// from it are inlined into the browser bundle as usual. Variables already set
+// in the environment (e.g. on Vercel) are not overwritten, and a missing file
+// is ignored.
+loadEnvConfig(path.resolve(process.cwd(), ".."), process.env.NODE_ENV !== "production");
 
 const nextConfig: NextConfig = {
   /* config options here */

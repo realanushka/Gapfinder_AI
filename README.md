@@ -10,6 +10,55 @@ Upload → Test → Find weak spots → Plan → Re-test → Plan updates
 
 It is built on **RAG (Retrieval-Augmented Generation)** — every quiz question, explanation and answer comes from the student's own uploaded material, never from the model's memory. See [ARCHITECTURE.md](./ARCHITECTURE.md) for how retrieval and generation are split.
 
+## Try the demo
+
+A demo account comes preloaded, so anyone can try the app without uploading anything.
+
+| | |
+|---|---|
+| **Live site** | `<add your Vercel URL here after deploying>` |
+| **Email** | `demo@gapfinder.ai` |
+| **Password** | `demo123` |
+
+On the login page click **Use demo account** (it fills in the fields), then **Log in**.
+
+> On the live site, the first request after a quiet spell can take **30–60 seconds**, because the free backend server is waking up. Wait and try again.
+
+### What's already in the demo account
+
+| Item | Details |
+|---|---|
+| Syllabus | `class10_science_syllabus.txt`, *Class 10 Science, Unit 2: Life Processes*. Its topic map is **already saved**, so it appears under **Syllabi** in the sidebar |
+| Topics | 3 topics with 2 subtopics each: **Nutrition** (autotrophic/photosynthesis, heterotrophic), **Respiration** (aerobic, anaerobic), **Transportation** (in human beings, in plants) |
+| Notes | `life_processes_notes.txt`, 6 sections linked to the topics, with chapter and page citations |
+| Past paper | `science_board_2023.txt`, 6 questions (Q1–Q3 Nutrition, Q4–Q5 Respiration, Q6 Transportation). These set each topic's exam weight: Nutrition 3, Respiration 2, Transportation 1 |
+| Quiz questions | 7 ready-made questions (3 Nutrition, 2 Respiration, 2 Transportation) |
+| Score history | 3 past attempts per topic showing improvement, so the **Dashboard** has charts from the first login |
+
+Score history (fraction answered correctly):
+
+| Topic | Attempt 1 | Attempt 2 | Attempt 3 |
+|---|---|---|---|
+| Nutrition | 33% 🔴 | 67% 🟡 | 100% 🟢 |
+| Respiration | 50% 🔴 | 50% 🔴 | 100% 🟢 |
+| Transportation | 50% 🔴 | 100% 🟢 | 100% 🟢 |
+
+### Suggested 5-minute walkthrough
+
+1. **Dashboard:** see the improvement over three attempts.
+2. **Sidebar → Class 10 Science:** open the syllabus page, which has **Quiz me** and **Ask** links on every topic.
+3. **Quiz:** pick *Nutrition* and generate questions. Each one cites the chapter and page of the notes it came from. Answer them, including one wrong answer on purpose.
+4. **Gap Report:** see which topics are 🔴 Weak, 🟡 Medium or 🟢 Strong, with a plain-language reason for each.
+5. **Plan:** click generate. You get a revision plan that puts the weakest, most exam-important topics first. The demo account doesn't include a saved plan, so it is generated on this click.
+6. **Explain:** ask, for example, *"Why does the light reaction need water?"* The tutor answers only from the uploaded notes.
+7. **Upload your own (optional):** add a PDF or `.txt` to **Notes**, add a syllabus, then run **Topic Map → Topic Build → Save topic map**. Saving takes about 30–60 seconds.
+
+### Good to know
+
+- **Shared account.** Everyone who uses the demo login shares the same data. To restore it to the original state, run `python -m scripts.seed_demo` in `backend/`. The script is safe to re-run: it wipes the demo account's data and loads it again.
+- **AI limits.** Quiz generation, grading, Gap Report reasons, Plan and Explain use Google Gemini's free tier, about 20 requests per day per model. If you see a *quota* message, try again later. Browsing the uploaded files, topics and dashboard keeps working.
+- **Demo only.** `demo123` is a public password. Don't store real data in this account.
+
 ## What it does
 
 **Organise your material**
@@ -59,7 +108,7 @@ Known limits:
 - **No automated test suite** is committed; the checks above were run as scripts.
 - The demo password `demo123` is for the demo only — change it before any public deployment.
 
-👉 **[RUNNING.md](./RUNNING.md) is the guide to starting the project.** [REMAINING.md](./REMAINING.md) lists optional work.
+👉 **[RUNNING.md](./RUNNING.md) is the guide to starting the project locally**, and **[DEPLOYING.md](./DEPLOYING.md) is the guide to putting it live for free** (Vercel + Render + Supabase). [REMAINING.md](./REMAINING.md) lists optional work.
 
 [EXECUTION.md](./EXECUTION.md) tracks the build phases, [ARCHITECTURE.md](./ARCHITECTURE.md) has the system design, and [GapFinder_AI_Implementation_Plan.md](./GapFinder_AI_Implementation_Plan.md) is the original 12-step plan.
 
@@ -71,9 +120,12 @@ Interactive docs are at <http://localhost:8000/docs> when the backend is running
 |---|---|
 | Auth | `POST /auth/signup`, `POST /auth/login`, `GET /auth/me` |
 | Files | `POST /documents/upload`, `GET /documents`, `GET/PATCH/DELETE /documents/{id}`, `GET /documents/{id}/content` |
-| Topic map | `POST /topics/preview/{document_id}` (Topic Build), `POST /topics/save`, `GET /topics` |
+| Topic map | `POST /topics/preview/{document_id}` (Topic Build), `POST /topics/save`, `POST /topics/build-from-syllabus/{document_id}` (one-shot build + save), `GET /topics` |
 | Syllabi | `GET /syllabi`, `GET /syllabi/{document_id}` |
-| Study | `POST /quiz/generate`, `POST /evaluate/answer`, `GET /gap-report`, `POST /gap-report/snapshot`, `POST /plan/generate`, `GET /plan/latest`, `POST /explain`, `GET /dashboard` |
+| Study | `POST /quiz/generate`, `GET /quiz/topic/{topic_id}`, `POST /evaluate/answer`, `GET /gap-report`, `POST /gap-report/snapshot`, `POST /plan/generate`, `GET /plan/latest`, `POST /explain`, `GET /dashboard` |
+| Health | `GET /health` |
+
+25 endpoints in total. See [ARCHITECTURE.md](./ARCHITECTURE.md) for what each one does.
 
 ## Repository layout
 
@@ -106,11 +158,12 @@ GapFinder AI/
 │   ├── migrations/versions/        # 0001 initial, 0002, 0003, 0004 (syllabus topic maps)
 │   ├── scripts/                    # verify_db, seed_demo, demo_data
 │   └── requirements.txt
-├── GapFinder_AI_Implementation_Plan.md
-├── ARCHITECTURE.md
-├── EXECUTION.md
-├── REMAINING.md
-├── RUNNING.md
+├── GapFinder_AI_Implementation_Plan.md   # original 12-step plan
+├── ARCHITECTURE.md                       # system design (as built)
+├── RUNNING.md                            # run locally + troubleshooting
+├── DEPLOYING.md                          # free hosting: Vercel + Render + Supabase
+├── EXECUTION.md                          # build phases and status
+├── REMAINING.md                          # optional work
 └── README.md
 ```
 
@@ -125,7 +178,13 @@ GapFinder AI/
 
 ### 1. Configure environment variables
 
-Backend — fill in `backend/.env` (it already exists with the non-secret values set):
+The whole project uses **one `.env` file in the root folder**, shared by the backend and the frontend. Copy the template and fill it in:
+
+```powershell
+copy .env.example .env      # Windows (cp .env.example .env elsewhere)
+```
+
+The backend reads it through `backend/app/config.py`, and the frontend through `frontend/next.config.ts`. Variables that are already set in the environment, such as those on Render or Vercel, take precedence over the file. The key settings:
 
 ```ini
 DATABASE_URL=postgresql+asyncpg://user:password@host:5432/postgres
@@ -152,7 +211,7 @@ Three things that will bite you:
 - **Remove the `[ ]` brackets** Supabase puts around `[YOUR-PASSWORD]`, and percent-encode any of `@ : / ? #` in the password.
 - On Supabase, use the **Direct connection** or **Session pooler** string (port 5432). The **Transaction pooler** (port 6543) runs through pgbouncer, which cannot execute the `CREATE EXTENSION` / `CREATE TYPE` statements the first migration needs.
 
-Frontend (`frontend/.env.local`, copy from `.env.local.example`):
+Frontend (same root `.env`):
 
 ```ini
 NEXT_PUBLIC_API_URL=http://localhost:8000
@@ -195,13 +254,36 @@ The app will be available at `http://localhost:3000`, talking to the API at `htt
 
 ### 5. Try the demo flow
 
-Log in with the preloaded demo account (`demo@gapfinder.ai` / `demo123`; on the login page click **Use demo account**, then **Log in**) to explore the app without uploading anything — it comes with a Class 10 Science syllabus (already saved, so it shows in the sidebar), notes and a past paper. Or upload your own material and walk through:
+Log in with the preloaded demo account (`demo@gapfinder.ai` / `demo123`). See **[Try the demo](#try-the-demo)** above for what it contains and a suggested walkthrough. Or upload your own material and walk through:
 
 ```
 Upload → Topic Map (Topic Build → Save) → Quiz → Gap Report → Plan → Explain → Retake → Dashboard
 ```
 
 Follow that order the first time: **the topic map must be saved before quizzes work**, because questions are drawn from the topic↔material links that Save creates. Save makes one LLM call per past-paper question, so give it a minute (longer for a large syllabus). See [RUNNING.md](./RUNNING.md) for the full walkthrough and troubleshooting.
+
+## Deploying for free
+
+The whole app can run on free plans:
+
+```
+Browser ──► Vercel (Next.js) ──► Render (FastAPI) ──► Supabase (Postgres + pgvector)
+                                        └──────────► Gemini API (LLM + embeddings)
+```
+
+| Part | Service | Notes |
+|---|---|---|
+| Frontend | **Vercel** (Hobby) | Free plan is for non-commercial use. `NEXT_PUBLIC_API_URL` is set at build time. |
+| Backend | **Render** (free web service) | Stateless, so no disk is needed. Sleeps after ~15 min idle; the first request then takes ~30–60 s. |
+| Database | **Supabase** (free) | Includes pgvector. Pauses after ~7 days of inactivity; restore it from the dashboard. |
+
+Things to know before sharing a public link:
+
+- The Gemini free tier is shared by every visitor (about 20 AI requests per day per model), so the quiz and tutor can run out on a busy day. The non-AI pages keep working.
+- Set a new `JWT_SECRET`, set `CORS_ORIGINS` to your frontend URL, and decide what to do with the public demo login (`demo123`).
+- There is no rate limiting on signup or the AI endpoints yet.
+
+The full step-by-step guide, environment variables and troubleshooting are in **[DEPLOYING.md](./DEPLOYING.md)**.
 
 ## Build order
 
@@ -212,6 +294,7 @@ Follow that order the first time: **the topic map must be saved before quizzes w
 ## Further reading
 
 - [RUNNING.md](./RUNNING.md) — **how to run the project**, plus troubleshooting
+- [DEPLOYING.md](./DEPLOYING.md) — **how to put it live for free** (Vercel + Render + Supabase)
 - [REMAINING.md](./REMAINING.md) — optional work and known rough edges
 - [EXECUTION.md](./EXECUTION.md) — build phases with their current status
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — system architecture, database schema, and the retrieval vs. generation breakdown
